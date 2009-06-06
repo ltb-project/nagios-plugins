@@ -1,11 +1,15 @@
 #!/usr/bin/perl -w
 
+#====================================================================
+# What's this ?
+#====================================================================
 # Script designed for Nagios http://www.nagios.org
 # Checks the response time of an LDAP Server doing a search on RootDSE
 # It uses threads if parameter -n is filled (threads require Perl 5.8)
 # Returns Nagios Code
 #
-# Copyright (C) 2004 Clement OUDOT <clement.oudot@linagora.com>
+# Copyright (C) 2004 Clement OUDOT
+# Copyright (C) 2009 LTB-project.org
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -18,21 +22,26 @@
 # GNU General Public License for more details.
 # 
 # GPL Licence : http://www.gnu.org/licenses/gpl.txt
-#
-# More contributions on http://www.linagora.org
+#====================================================================
 
+#====================================================================
 # Packages
+#====================================================================
 use strict ;
 use Net::LDAP ;
 use Getopt::Std ;
 use Time::HiRes qw(gettimeofday) ;
 
+#====================================================================
 # Global parameters
+#====================================================================
 my $version = 3 ;
 my %code = ( Ok => 0, Warning => 1, Critical => 2, Unknown => 3 );
 my ( $host, $port, $binddn, $bindpw, $nb_threads, $warning, $critical ) = &options ;
 
+#====================================================================
 # Main program
+#====================================================================
 
 main() ;
 

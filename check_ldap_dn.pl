@@ -1,10 +1,14 @@
 #!/usr/bin/perl -w
 
+#====================================================================
+# What's this ?
+#====================================================================
 # Script designed for Nagios ( http://www.nagios.org )
 # Checks if a DN is in an LDAP Server
 # Returns Nagios Code
 #
-# Copyright (C) 2004 Clement OUDOT <clement.oudot@linagora.com>
+# Copyright (C) 2004 Clement OUDOT
+# Copyright (C) 2009 LTB-project.org
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,22 +20,29 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 # 
-# GPL Licence : http://www.gnu.org/licenses/gpl.txt
-#
-# More contributions on http://www.linagora.org
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#====================================================================
 
+#====================================================================
 # Packages
+#====================================================================
 use strict ;
 use Net::LDAP ;
 use Getopt::Std ;
 
+#====================================================================
 # Global parameters
+#====================================================================
 my %code = ( Ok => 0, Warning => 1, Critical => 2, Unknown => 3 );
 my ( $host, $port, $binddn, $bindpw, $dn ) = &options ;
 my $timeout = 5 ;
 my $version = 3 ;
 
+#====================================================================
 # Main program
+#====================================================================
 
 main() ;
 

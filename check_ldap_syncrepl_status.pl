@@ -8,11 +8,11 @@
 # To know if a slave and a master are in sync, get the ContextCSN
 # and compare them
 #
-# Copyright (C) 2007 Clement OUDOT <coudot_at_linagora_dot_com>
-# Copyright (C) 2007 LINAGORA <http://www.linagora.com>
+# Copyright (C) 2007 Clement OUDOT
+# Copyright (C) 2009 LTB-project.org
 # 
 #==========================================================================
-# License: GPLv3
+# License: GPLv2+
 #==========================================================================
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,9 +25,6 @@
 # GNU General Public License for more details.
 # 
 # GPL License: http://www.gnu.org/licenses/gpl.txt
-#
-#==========================================================================
-# Please visit http://www.linagora.org for other contributions
 #==========================================================================
 
 #==========================================================================
