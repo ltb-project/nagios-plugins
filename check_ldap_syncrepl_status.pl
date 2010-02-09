@@ -30,6 +30,10 @@
 #==========================================================================
 # Changelog
 #==========================================================================
+# Version 0.5 (2010/02/09):
+# - Single master mode (no need to set SID)
+# Authors: Philippe CAMPS, Clement OUDOT
+#
 # Version 0.4 (2009/01/26):
 # - Correct bug on slavecsn/mastercsn comparaison (thanks to Laurent Foucher)
 # Author: Clement OUDOT <coudot_at_linagora_dot_com>
@@ -53,7 +57,7 @@
 #==========================================================================
 # Version
 #==========================================================================
-my $VERSION = '0.4';
+my $VERSION = '0.5';
 my $TEMPLATE_VERSION = '1.0.0';
 
 #==========================================================================
@@ -107,6 +111,7 @@ my $ldap_bindpw;
 my $ldap_binduri;
 my $ldap_suffix;
 my $ldap_serverid;
+my $ldap_singlemaster;
 
 GetOptions(
 	'h'=> \$help,'help'=> \$help,
@@ -141,6 +146,7 @@ GetOptions(
 	'U:s'=>\$ldap_binduri,'binduri:s'=>\$ldap_binduri,
 	'S:s'=>\$ldap_suffix,'suffix:s'=>\$ldap_suffix,
 	'I:s'=>\$ldap_serverid,'serverid:s'=>\$ldap_serverid,
+	's'=>\$ldap_singlemaster,'singlemaster'=>\$ldap_singlemaster,
 );
 
 # Fix SMNP Version
@@ -232,6 +238,8 @@ if ($help) {
 	print "\tSuffix of the directories. Retrieve this value in RootDSE if not present.\n";
 	print "-I, --serverid=STRING\n";
 	print "\tSID of the syncrepl link\n";
+	print "-s, --singlemaster\n";
+	print "\tClassic master-slave. No multi-mastering\n";
 	print "\n";
 
 	&support;
@@ -397,10 +405,16 @@ sub get_contextcsn {
 		&verbose('2', "Found ContextCSN: ".$_);
 		# Keep only ContextCSN with SID
 		my @csn = &parse_csn($_);
-		if ($serverid eq $csn[2]) {
+		if (! $ldap_singlemaster) {
+			if ($serverid eq $csn[2]) {
+				$contextcsn= $_ ;
+				&verbose('2', "ContextCSN match with SID $serverid: ".$contextcsn);
+				last;
+			}
+		}
+		else {
 			$contextcsn= $_ ;
-			&verbose('2', "ContextCSN match with SID $serverid: ".$contextcsn);
-			last;
+                        &verbose('2', "ContextCSN match with SID $serverid: ".$contextcsn);
 		}
 	}
 	unless ($contextcsn) {
