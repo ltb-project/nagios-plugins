@@ -419,19 +419,17 @@ if ($perf_data) {
 
 # Test the $nb_entries and exit
 if ( $nb_entries < $warning ) {
-    print
-      "OK - $nb_entries entries returned (W:$warning - C:$critical)$perfparse";
+    print "OK - $nb_entries entries returned $perfparse\n";
     exit $ERRORS{'OK'};
 }
-elsif ( $nb_entries > $warning and $nb_entries < $critical ) {
-    print
-"WARNING - $nb_entries entries returned (W:$warning - C:$critical)$perfparse";
+elsif ( $nb_entries >= $warning and $nb_entries < $critical ) {
+    print "WARNING - $nb_entries entries returned $perfparse\n";
     exit $ERRORS{'WARNING'};
 }
 else {
-    print
-"CRITICAL - $nb_entries entries returned (W:$warning - C:$critical)$perfparse";
+    print "CRITICAL - $nb_entries entries returned $perfparse\n";
     exit $ERRORS{'CRITICAL'};
 }
 
 exit $ERRORS{'UNKNOWN'};
+
