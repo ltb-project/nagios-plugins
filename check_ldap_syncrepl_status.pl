@@ -320,7 +320,7 @@ sub parse_csn {
     &verbose( '3', "Enter &parse_csn" );
     my ($csn) = @_;
     my ( $utime, $mtime, $count, $sid, $mod ) =
-      ( $csn =~ m/(\d{14})\.?(\d{6})?Z#(\w{6})#(\d{2,3})#(\w{6})/g );
+      ( $csn =~ m/(\d{14})\.?(\d{6})?Z#(\w{6})#(\w{2,3})#(\w{6})/g );
     &verbose( '2', "Parse $csn into $utime - $count - $sid - $mod" );
     &verbose( '3', "Leave &parse_csn" );
     return ( $utime, $count, $sid, $mod );
