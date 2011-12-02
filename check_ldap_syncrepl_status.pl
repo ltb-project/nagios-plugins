@@ -28,36 +28,9 @@
 #==========================================================================
 
 #==========================================================================
-# Changelog
-#==========================================================================
-# Version 0.5 (2010/02/09):
-# - Single master mode (no need to set SID)
-# Authors: Philippe CAMPS, Clement OUDOT
-#
-# Version 0.4 (2009/01/26):
-# - Correct bug on slavecsn/mastercsn comparaison (thanks to Laurent Foucher)
-# Author: Clement OUDOT <coudot_at_linagora_dot_com>
-#
-# Version 0.3 (2009/01/19):
-# - Add support for startTLS (ldap+tls://)
-# - LDAP URI can be use for slave
-# - Add debug message for verbose level 3 (-vvv)
-# Author: Clement OUDOT <coudot_at_linagora_dot_com>
-#
-# Version 0.2 (2008/11/19):
-# - Add support for SID (Syncrepl ServerID)
-# - Add debug message for verbose level 2 (-vv)
-# Author: Clement OUDOT <coudot_at_linagora_dot_com>
-#
-# Version 0.1 (2007/11/27):
-# - First version
-# Author: Clement OUDOT <coudot_at_linagora_dot_com>
-#==========================================================================
-
-#==========================================================================
 # Version
 #==========================================================================
-my $VERSION          = '0.5';
+my $VERSION          = '0.4';
 my $TEMPLATE_VERSION = '1.0.0';
 
 #==========================================================================
