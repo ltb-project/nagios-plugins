@@ -61,6 +61,7 @@ my $verbose = 0;
 my $host;
 my $warning;
 my $critical;
+my $mode;
 my $logname;
 my $authentication;
 my $log_file;
@@ -105,6 +106,8 @@ GetOptions(
     'warning:i'  => \$warning,
     'c:i'        => \$critical,
     'critical:i' => \$critical,
+    'm:s'        => \$mode,
+    'mode:s'     => \$mode,
 
     #'l:s'=> \$logname,'logname:s'=> \$logname,
     #'a:s'=> \$authentication,
@@ -191,11 +194,14 @@ if ($help) {
     print
 "\tIP or name (FQDN) of the directory. You can use URI (ldap://, ldaps://, ldap+tls://)\n";
     print "-p, --port=INTEGER\n";
-    print "\tSirectory port to connect to.\n";
+    print "\tDirectory port to connect to.\n";
     print "-w, --warning=INTERGER\n";
     print "\tEntries number limit to return a warning status.\n";
     print "-c, --critical=DOUBLE\n";
     print "\tEntries number limit to return a critical status.\n";
+    print "-m --mode=(greater|lesser)\n";
+    print
+"\tDefine if number of entries should be greater or lesser thant thresold\n";
 
     #print "-l, --logname=STRING\n";
     #print "\tUser id for login.\n";
@@ -275,6 +281,14 @@ sub check_base_param {
     }
 }
 
+# check if -m is correctly used
+sub check_mode_type {
+    if ( !defined($mode) or !( $mode eq "greater" or $mode eq "lesser" ) ) {
+        printf "UNKNOWN: you have to define mode type : greater or lesser\n";
+        exit $ERRORS{UNKNOWN};
+    }
+}
+
 # check if -w is used
 sub check_warning_param {
     if ( !defined($warning) ) {
@@ -287,6 +301,15 @@ sub check_warning_param {
 sub check_critical_param {
     if ( !defined($critical) ) {
         printf "UNKNOWN: you have to define a critical thresold.\n";
+        exit $ERRORS{UNKNOWN};
+    }
+
+    if ( $mode eq "greater" and $critical >= $warning ) {
+        printf "With greater mode, warning should be greater than critical\n";
+        exit $ERRORS{UNKNOWN};
+    }
+    elsif ( $mode eq "lesser" and $warning >= $critical ) {
+        printf "With lesser mode, warning should be lesser than critical\n";
         exit $ERRORS{UNKNOWN};
     }
 }
@@ -369,6 +392,7 @@ sub get_entries {
 # Options checks
 &check_host_param();
 &check_base_param();
+&check_mode_type();
 &check_warning_param();
 &check_critical_param();
 
@@ -418,17 +442,33 @@ if ($perf_data) {
 }
 
 # Test the $nb_entries and exit
-if ( $nb_entries < $warning ) {
-    print "OK - $nb_entries entries returned $perfparse\n";
-    exit $ERRORS{'OK'};
+if ( $mode eq "lesser" ) {
+    if ( $nb_entries < $warning ) {
+        print "OK - $nb_entries entries returned $perfparse\n";
+        exit $ERRORS{'OK'};
+    }
+    elsif ( $nb_entries >= $warning and $nb_entries < $critical ) {
+        print "WARNING - $nb_entries entries returned $perfparse\n";
+        exit $ERRORS{'WARNING'};
+    }
+    else {
+        print "CRITICAL - $nb_entries entries returned $perfparse\n";
+        exit $ERRORS{'CRITICAL'};
+    }
 }
-elsif ( $nb_entries >= $warning and $nb_entries < $critical ) {
-    print "WARNING - $nb_entries entries returned $perfparse\n";
-    exit $ERRORS{'WARNING'};
-}
-else {
-    print "CRITICAL - $nb_entries entries returned $perfparse\n";
-    exit $ERRORS{'CRITICAL'};
+elsif ( $mode eq "greater" ) {
+    if ( $nb_entries > $warning ) {
+        print "OK - $nb_entries entries returned $perfparse\n";
+        exit $ERRORS{'OK'};
+    }
+    elsif ( $nb_entries <= $warning and $nb_entries > $critical ) {
+        print "WARNING - $nb_entries entries returned $perfparse\n";
+        exit $ERRORS{'WARNING'};
+    }
+    else {
+        print "CRITICAL - $nb_entries entries returned $perfparse\n";
+        exit $ERRORS{'CRITICAL'};
+    }
 }
 
 exit $ERRORS{'UNKNOWN'};
