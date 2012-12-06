@@ -198,10 +198,21 @@ if ($help) {
     print "-T --type=STRING\n";
     print "\tDefine which information to check:\n";
     print "\t\tcurrentconnections: current established connections\n";
-    print "\t\ttotalconnections: total established connections since startup\n";
+    print "\t\ttotalconnections: total established connections\n";
     print "\t\tdncache: total DN in cache\n";
     print "\t\tentrycache: total entries in cache\n";
     print "\t\tidlcache: total IDL in cache\n";
+    print "\t\ttotaloperations: total operations\n";
+    print "\t\ttotalabandon: total ABANDON operations\n";
+    print "\t\ttotaladd: total ADD operations\n";
+    print "\t\ttotalbind: total BIND operations\n";
+    print "\t\ttotalcompare: total COMPARE operations\n";
+    print "\t\ttotaldelete: total DELETE operations\n";
+    print "\t\ttotalextended: total EXTENDED operations\n";
+    print "\t\ttotalmodify: total MODIFY operations\n";
+    print "\t\ttotalmodrdn: total MODRDN operations\n";
+    print "\t\ttotalsearch: total SEARCH operations\n";
+    print "\t\ttotalunbind: total UNBIND operations\n";
 
     #print "-l, --logname=STRING\n";
     #print "\tUser id for login.\n";
@@ -464,6 +475,94 @@ if ( $type =~ /idlcache/i ) {
     $ldap_scope  ||= "one";
     $ldap_base   ||= "cn=Databases,cn=Monitor";
     $ldap_attribute = "olmBDBIDLCache";
+    $type_defined   = 1;
+}
+if ( $type =~ /totaloperations/i ) {
+    $type_string = "total operations";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=Operations,cn=Monitor";
+    $ldap_attribute = "monitorOpCompleted";
+    $type_defined   = 1;
+}
+if ( $type =~ /totalabandon/i ) {
+    $type_string = "total ABANDON operations";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=Abandon,cn=Operations,cn=Monitor";
+    $ldap_attribute = "monitorOpCompleted";
+    $type_defined   = 1;
+}
+if ( $type =~ /totaladd/i ) {
+    $type_string = "total ADD operations";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=Add,cn=Operations,cn=Monitor";
+    $ldap_attribute = "monitorOpCompleted";
+    $type_defined   = 1;
+}
+if ( $type =~ /totalbind/i ) {
+    $type_string = "total BIND operations";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=Bind,cn=Operations,cn=Monitor";
+    $ldap_attribute = "monitorOpCompleted";
+    $type_defined   = 1;
+}
+if ( $type =~ /totalcompare/i ) {
+    $type_string = "total COMPARE operations";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=Compare,cn=Operations,cn=Monitor";
+    $ldap_attribute = "monitorOpCompleted";
+    $type_defined   = 1;
+}
+if ( $type =~ /totaldelete/i ) {
+    $type_string = "total DELETE operations";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=Delete,cn=Operations,cn=Monitor";
+    $ldap_attribute = "monitorOpCompleted";
+    $type_defined   = 1;
+}
+if ( $type =~ /totalextended/i ) {
+    $type_string = "total EXTENDED operations";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=Extended,cn=Operations,cn=Monitor";
+    $ldap_attribute = "monitorOpCompleted";
+    $type_defined   = 1;
+}
+if ( $type =~ /totalmodify/i ) {
+    $type_string = "total MODIFY operations";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=Modify,cn=Operations,cn=Monitor";
+    $ldap_attribute = "monitorOpCompleted";
+    $type_defined   = 1;
+}
+if ( $type =~ /totalmodrdn/i ) {
+    $type_string = "total MODRDN operations";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=Modrdn,cn=Operations,cn=Monitor";
+    $ldap_attribute = "monitorOpCompleted";
+    $type_defined   = 1;
+}
+if ( $type =~ /totalsearch/i ) {
+    $type_string = "total SEARCH operations";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=Search,cn=Operations,cn=Monitor";
+    $ldap_attribute = "monitorOpCompleted";
+    $type_defined   = 1;
+}
+if ( $type =~ /totalunbind/i ) {
+    $type_string = "total UNBIND operations";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=Unbind,cn=Operations,cn=Monitor";
+    $ldap_attribute = "monitorOpCompleted";
     $type_defined   = 1;
 }
 
