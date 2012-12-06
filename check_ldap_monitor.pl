@@ -199,6 +199,9 @@ if ($help) {
     print "\tDefine which information to check:\n";
     print "\t\tcurrentconnections: current established connections\n";
     print "\t\ttotalconnections: total established connections since startup\n";
+    print "\t\tdncache: total DN in cache\n";
+    print "\t\tentrycache: total entries in cache\n";
+    print "\t\tidlcache: total IDL in cache\n";
 
     #print "-l, --logname=STRING\n";
     #print "\tUser id for login.\n";
@@ -437,6 +440,30 @@ if ( $type =~ /totalconnections/i ) {
     $ldap_scope  ||= "base";
     $ldap_base   ||= "cn=Total,cn=Connections,cn=Monitor";
     $ldap_attribute = "monitorCounter";
+    $type_defined   = 1;
+}
+if ( $type =~ /dncache/i ) {
+    $type_string = "DN in cache";
+    $ldap_filter ||= "(objectClass=olmBDBDatabase)";
+    $ldap_scope  ||= "one";
+    $ldap_base   ||= "cn=Databases,cn=Monitor";
+    $ldap_attribute = "olmBDBDNCache";
+    $type_defined   = 1;
+}
+if ( $type =~ /entrycache/i ) {
+    $type_string = "entries in cache";
+    $ldap_filter ||= "(objectClass=olmBDBDatabase)";
+    $ldap_scope  ||= "one";
+    $ldap_base   ||= "cn=Databases,cn=Monitor";
+    $ldap_attribute = "olmBDBEntryCache";
+    $type_defined   = 1;
+}
+if ( $type =~ /idlcache/i ) {
+    $type_string = "IDL in cache";
+    $ldap_filter ||= "(objectClass=olmBDBDatabase)";
+    $ldap_scope  ||= "one";
+    $ldap_base   ||= "cn=Databases,cn=Monitor";
+    $ldap_attribute = "olmBDBIDLCache";
     $type_defined   = 1;
 }
 
