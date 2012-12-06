@@ -195,8 +195,10 @@ if ($help) {
     print "-m --mode=(greater|lesser)\n";
     print
 "\tDefine if number returned should be greater or lesser thant thresold\n";
-    print "-T --type=(currentconnections)\n";
-    print "\tDefine which information to check\n";
+    print "-T --type=STRING\n";
+    print "\tDefine which information to check:\n";
+    print "\t\tcurrentconnections: current established connections\n";
+    print "\t\ttotalconnections: total established connections since startup\n";
 
     #print "-l, --logname=STRING\n";
     #print "\tUser id for login.\n";
@@ -427,6 +429,12 @@ my $type_defined = 0;
 if ( $type =~ /currentconnections/i ) {
     $type_string    = "current connections";
     $ldap_base      = "cn=Current,cn=Connections,cn=Monitor";
+    $ldap_attribute = "monitorCounter";
+    $type_defined   = 1;
+}
+if ( $type =~ /totalconnections/i ) {
+    $type_string    = "total connections";
+    $ldap_base      = "cn=Total,cn=Connections,cn=Monitor";
     $ldap_attribute = "monitorCounter";
     $type_defined   = 1;
 }
