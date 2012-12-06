@@ -391,10 +391,7 @@ sub get_value {
 #=========================================================================
 
 # Default values
-$ldap_filter ||= "(objectClass=*)";
-$ldap_scope  ||= "sub";
-$ldap_base   ||= "cn=monitor";
-$mode        ||= "lesser";
+$mode ||= "lesser";
 
 # Options checks
 &check_host_param();
@@ -427,14 +424,18 @@ if ($errorcode) {
 # Convert type into Monitor LDAP parameters
 my $type_defined = 0;
 if ( $type =~ /currentconnections/i ) {
-    $type_string    = "current connections";
-    $ldap_base      = "cn=Current,cn=Connections,cn=Monitor";
+    $type_string = "current connections";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=Current,cn=Connections,cn=Monitor";
     $ldap_attribute = "monitorCounter";
     $type_defined   = 1;
 }
 if ( $type =~ /totalconnections/i ) {
-    $type_string    = "total connections";
-    $ldap_base      = "cn=Total,cn=Connections,cn=Monitor";
+    $type_string = "total connections";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=Total,cn=Connections,cn=Monitor";
     $ldap_attribute = "monitorCounter";
     $type_defined   = 1;
 }
