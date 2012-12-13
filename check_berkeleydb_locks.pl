@@ -8,6 +8,7 @@
 # Get BerkeleyDB max locks used
 #
 # Copyright (C) 2012 Clement OUDOT
+# Copyright (C) 2012 Joel SAUNIER
 # Copyright (C) 2012 LTB-project.org
 #
 #==========================================================================
@@ -36,7 +37,8 @@ my $TEMPLATE_VERSION = '1.0.0';
 # Modules
 #==========================================================================
 use strict;
-use lib '/usr/local/nagios/libexec';
+use lib
+  qw(/usr/local/nagios/libexec /usr/lib/nagios/plugins /usr/lib64/nagios/plugins);
 use utils qw /$TIMEOUT %ERRORS &print_revision &support/;
 use Getopt::Long;
 &Getopt::Long::config('bundling');
@@ -66,6 +68,9 @@ my $exclude;
 my $minute = 60;
 my $url;
 
+my $current = 0;
+my $maximum = 0;
+
 my $db_home;
 my $db_stat;
 
@@ -82,11 +87,12 @@ GetOptions(
     'critical:i' => \$critical,
     'f'          => \$perf_data,
     'perf_data'  => \$perf_data,
+    'current!'   => \$current,
+    'maximum!'   => \$maximum,
     'H:s'        => \$db_home,
     'db_home:s'  => \$db_home,
     'S:s'        => \$db_stat,
     'db_stat:s'  => \$db_stat,
-
 );
 
 #==========================================================================
@@ -114,7 +120,7 @@ if ($version) {
 if ($help) {
     &print_revision( $progname, "\$Revision: $VERSION\$" );
 
-    print "\n\nGet BerkeleyDB max locks used.\n\n";
+    print "\n\nGet BerkeleyDB maximum and current locks used.\n\n";
 
     &print_usage;
 
@@ -128,12 +134,21 @@ if ($help) {
     print "\tHome of BDB files\n";
     print "-S, --db_stat=STRING\n";
     print "\tPath to db_stat utility.\n";
-    print "-w, --warning=INTERGER\n";
-    print "\tPercent of max locks used to send a warning status.\n";
+    print "-w, --warning=INTEGER\n";
+    print
+"\tPercent of locks used to send a warning status.\n\tUse max locks by default, unless --current and --nomaximum are set\n";
     print "-c, --critical=DOUBLE\n";
-    print "\tPercent of max locks used a critical status.\n";
+    print
+"\tPercent of locks used a critical status.\n\tUse max locks by default, unless --current and --nomaximum are set.\n";
     print "-f, --perf_data\n";
-    print "\tDisplay performance data.\n";
+    print
+"\tDisplay performance data.\n\tSet --maximum if --nocurrent and --nomaximum are set.\n";
+    print "--current\n";
+    print
+"\tDisplay performance data for current locks/lockers/lock objects.\n\tDefault to --nocurrent\n";
+    print "--maximum\n";
+    print
+"\tDisplay performance data for maximum locks/lockers/lock objects.\n\tDefault to --nomaximum\n";
     print "\n";
 
     &support;
@@ -189,6 +204,7 @@ sub check_critical_param {
 
 # Default values
 $db_stat ||= "/usr/local/berkeleydb/bin/db_stat";
+$maximum = 1 if ( $current == 0 and $maximum == 0 );
 
 # Run db_stat
 #
@@ -200,6 +216,9 @@ my $max_lock_objects_possible = 0;
 my $max_locks                 = 0;
 my $max_lockers               = 0;
 my $max_lock_objects          = 0;
+my $current_locks             = 0;
+my $current_lockers           = 0;
+my $current_lock_objects      = 0;
 
 foreach (@result) {
 
@@ -221,6 +240,12 @@ foreach (@result) {
     if ( $_ =~ m/(\d+)\s*Maximum number of lock objects at any one time/ ) {
         $max_lock_objects = $1;
     }
+    if ( $_ =~ m/(\d+)\s*Number of current locks/ )   { $current_locks   = $1 }
+    if ( $_ =~ m/(\d+)\s*Number of current lockers/ ) { $current_lockers = $1 }
+    if ( $_ =~ m/(\d+)\s*Number of current lock objects/ ) {
+        $current_lock_objects = $1;
+    }
+
 }
 
 #==========================================================================
@@ -228,48 +253,115 @@ foreach (@result) {
 #==========================================================================
 
 # Prepare PerfParse data
-my $perfparse = " ";
+my $perfparse = "|";
 if ($perf_data) {
-    $perfparse = "|'max_locks_possible'=$max_locks_possible";
-    $perfparse .= " 'max_lockers_possible'=$max_lockers_possible";
-    $perfparse .= " 'max_lock_objects_possible'=$max_lock_objects_possible";
-    $perfparse .= " 'max_locks'=$max_locks";
-    $perfparse .= " 'max_lockers'=$max_lockers";
-    $perfparse .= " 'max_lock_objects'=$max_lock_objects";
+    my $warnvalue = 0;
+    my $critvalue = 0;
+
+    if ($current) {
+        $warnvalue = int( ( $max_locks_possible * $warning ) / 100 );
+        $critvalue = int( ( $max_locks_possible * $critical ) / 100 );
+        $perfparse .=
+"'current_locks'=$current_locks;$warnvalue;$critvalue;0;$max_locks_possible ";
+
+        $warnvalue = int( ( $max_lockers_possible * $warning ) / 100 );
+        $critvalue = int( ( $max_lockers_possible * $critical ) / 100 );
+        $perfparse .=
+"'current_lockers'=$current_lockers;$warnvalue;$critvalue;0;$max_lockers_possible ";
+
+        $warnvalue = int( ( $max_lock_objects_possible * $warning ) / 100 );
+        $critvalue = int( ( $max_lock_objects_possible * $critical ) / 100 );
+        $perfparse .=
+"'current_lock_objects'=$current_lock_objects;$warnvalue;$critvalue;0;$max_lock_objects_possible ";
+    }
+
+    if ($maximum) {
+        $warnvalue = int( ( $max_locks_possible * $warning ) / 100 );
+        $critvalue = int( ( $max_locks_possible * $critical ) / 100 );
+        $perfparse .=
+          "'max_locks'=$max_locks;$warnvalue;$critvalue;0;$max_locks_possible ";
+
+        $warnvalue = int( ( $max_lockers_possible * $warning ) / 100 );
+        $critvalue = int( ( $max_lockers_possible * $critical ) / 100 );
+        $perfparse .=
+"'max_lockers'=$max_lockers;$warnvalue;$critvalue;0;$max_lockers_possible ";
+
+        $warnvalue = int( ( $max_lock_objects_possible * $warning ) / 100 );
+        $critvalue = int( ( $max_lock_objects_possible * $critical ) / 100 );
+        $perfparse .=
+"'max_lock_objects'=$max_lock_objects;$warnvalue;$critvalue;0;$max_lock_objects_possible ";
+    }
+
 }
 
 # Check percent of locks
 #
 
-my $percent_locks   = int( $max_locks / $max_locks_possible * 100 );
-my $percent_lockers = int( $max_lockers / $max_lockers_possible * 100 );
-my $percent_lock_objects =
+my $percent_max_locks   = int( $max_locks / $max_locks_possible * 100 );
+my $percent_max_lockers = int( $max_lockers / $max_lockers_possible * 100 );
+my $percent_max_lock_objects =
   int( $max_lock_objects / $max_lock_objects_possible * 100 );
 
-# Check CRITICAL
-if (   $percent_locks > $critical
-    || $percent_lockers > $critical
-    || $percent_lock_objects > $critical )
-{
-    print
-"CRITICAL - $percent_locks% locks, $percent_lockers% lockers, $percent_lock_objects% lock_objects $perfparse\n";
-    exit $ERRORS{'CRITICAL'};
+my $percent_curr_locks = int( $current_locks / $max_locks_possible * 100 );
+my $percent_curr_lockers =
+  int( $current_lockers / $max_lockers_possible * 100 );
+my $percent_curr_lock_objects =
+  int( $current_lock_objects / $max_lock_objects_possible * 100 );
+
+# Check CRITICAL/WARNING/OK
+#
+if ($maximum) {
+    if (   $percent_max_locks > $critical
+        || $percent_max_lockers > $critical
+        || $percent_max_lock_objects > $critical )
+    {
+        print
+"CRITICAL - $percent_max_locks% locks, $percent_max_lockers% lockers, $percent_max_lock_objects% lock_objects $perfparse\n";
+        exit $ERRORS{'CRITICAL'};
+    }
+    if (   $percent_max_locks > $warning
+        || $percent_max_lockers > $warning
+        || $percent_max_lock_objects > $warning )
+    {
+        print
+"WARNING - $percent_max_locks% locks, $percent_max_lockers% lockers, $percent_max_lock_objects% lock_objects $perfparse\n";
+        exit $ERRORS{'WARNING'};
+    }
+    if (   $percent_max_locks <= $warning
+        && $percent_max_lockers <= $warning
+        && $percent_max_lock_objects <= $warning )
+    {
+        print
+"OK - $percent_max_locks% locks, $percent_max_lockers% lockers, $percent_max_lock_objects% lock_objects $perfparse\n";
+        exit $ERRORS{'OK'};
+    }
 }
-if (   $percent_locks > $warning
-    || $percent_lockers > $warning
-    || $percent_lock_objects > $warning )
-{
-    print
-"WARNING - $percent_locks% locks, $percent_lockers% lockers, $percent_lock_objects% lock_objects $perfparse\n";
-    exit $ERRORS{'WARNING'};
-}
-if (   $percent_locks <= $warning
-    && $percent_lockers <= $warning
-    && $percent_lock_objects <= $warning )
-{
-    print
-"OK - $percent_locks% locks, $percent_lockers% lockers, $percent_lock_objects% lock_objects $perfparse\n";
-    exit $ERRORS{'OK'};
+
+if ($current) {
+    if (   $percent_curr_locks > $critical
+        || $percent_curr_lockers > $critical
+        || $percent_curr_lock_objects > $critical )
+    {
+        print
+"CRITICAL - $percent_curr_locks% locks, $percent_curr_lockers% lockers, $percent_curr_lock_objects% lock_objects $perfparse\n";
+        exit $ERRORS{'CRITICAL'};
+    }
+    if (   $percent_curr_locks > $warning
+        || $percent_curr_lockers > $warning
+        || $percent_curr_lock_objects > $warning )
+    {
+        print
+"WARNING - $percent_curr_locks% locks, $percent_curr_lockers% lockers, $percent_curr_lock_objects% lock_objects $perfparse\n";
+        exit $ERRORS{'WARNING'};
+    }
+    if (   $percent_curr_locks <= $warning
+        && $percent_curr_lockers <= $warning
+        && $percent_curr_lock_objects <= $warning )
+    {
+        print
+"OK - $percent_curr_locks% locks, $percent_curr_lockers% lockers, $percent_curr_lock_objects% lock_objects $perfparse\n";
+        exit $ERRORS{'OK'};
+    }
 }
 
 exit $ERRORS{'UNKNOWN'};
