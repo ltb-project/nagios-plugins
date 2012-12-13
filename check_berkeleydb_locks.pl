@@ -5,7 +5,7 @@
 #==========================================================================
 # Check LDAP query
 #
-# Get BerkeleyDB max locks used
+# Get BerkeleyDB locks
 #
 # Copyright (C) 2012 Clement OUDOT
 # Copyright (C) 2012 Joel SAUNIER
