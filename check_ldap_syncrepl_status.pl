@@ -84,7 +84,8 @@ my $oid;
 my $ldap_binddn;
 my $ldap_bindpw;
 my $ldap_binduri;
-my $ldap_suffix;
+my $slave_ldap_suffix;
+my $master_ldap_suffix;
 my $ldap_serverid;
 my $ldap_singlemaster;
 
@@ -134,8 +135,10 @@ GetOptions(
     'bindpw:s'     => \$ldap_bindpw,
     'U:s'          => \$ldap_binduri,
     'binduri:s'    => \$ldap_binduri,
-    'S:s'          => \$ldap_suffix,
-    'suffix:s'     => \$ldap_suffix,
+    'S:s'          => \$slave_ldap_suffix,
+    'suffix:s'     => \$slave_ldap_suffix,
+    'M:s'          => \$master_ldap_suffix,
+    'mastersuffix:s'     => \$master_ldap_suffix,
     'I:s'          => \$ldap_serverid,
     'serverid:s'   => \$ldap_serverid,
     's'            => \$ldap_singlemaster,
@@ -237,6 +240,7 @@ if ($help) {
     print
 "\tBind URI (ldap://, ldaps://, ldap+tls://) of the master directory. Retrieve this value in cn=monitor if not present.\n";
     print "-S, --suffix=STRING\n";
+    print "-M, --mastersuffix=STRING\n";
     print
 "\tSuffix of the directories. Retrieve this value in RootDSE if not present.\n";
     print "-I, --serverid=STRING\n";
@@ -481,14 +485,15 @@ if ($errorcode) {
 }
 
 # Get the suffix if not provided
-if ( !$ldap_suffix ) {
-    ( $errorcode, $ldap_suffix ) = &get_suffix($ldap_slave);
+if ( !$slave_ldap_suffix ) {
+    ( $errorcode, $slave_ldap_suffix ) = &get_suffix($ldap_slave);
     if ($errorcode) {
         print
 "Can't get suffix from $slave_uri. Please provide it with -S option.\n";
         exit $ERRORS{'UNKNOWN'};
     }
 }
+
 
 # Get the master URI if not provided
 my $master_uri = $ldap_binduri;
@@ -510,12 +515,22 @@ if ($errorcode) {
     exit $ERRORS{'CRITICAL'};
 }
 
+# Get the suffix if not provided
+if ( !$master_ldap_suffix ) {
+    ( $errorcode, $master_ldap_suffix ) = &get_suffix($ldap_master);
+    if ($errorcode) {
+        print
+"Can't get suffix from $master_uri. Please provide it with -M option.\n";
+        exit $ERRORS{'UNKNOWN'};
+    }
+}
+
 # Get the contextCSN
 my $slavecsn;
 my $mastercsn;
 
 ( $errorcode, $slavecsn ) =
-  &get_contextcsn( $ldap_slave, $ldap_suffix, $ldap_serverid );
+  &get_contextcsn( $ldap_slave, $slave_ldap_suffix, $ldap_serverid );
 if ($errorcode) {
     print
 "Can't get Context CSN with SID $ldap_serverid from $slave_uri. Please set SID with -I option.\n";
@@ -523,7 +538,7 @@ if ($errorcode) {
 }
 
 ( $errorcode, $mastercsn ) =
-  &get_contextcsn( $ldap_master, $ldap_suffix, $ldap_serverid );
+  &get_contextcsn( $ldap_master, $master_ldap_suffix, $ldap_serverid );
 if ($errorcode) {
     print
 "Can't get Context CSN with SID $ldap_serverid from $master_uri. Please set SID with -I option.\n";
