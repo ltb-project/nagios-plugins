@@ -129,20 +129,20 @@ GetOptions(
     #'X:s'=> \$privpasswd,'privpasswd:s'=> \$privpasswd,
     #'o:s'=> \$oid,'oid:s'=> \$oid,
     # For LDAP plugins
-    'D:s'          => \$ldap_binddn,
-    'binddn:s'     => \$ldap_binddn,
-    'P:s'          => \$ldap_bindpw,
-    'bindpw:s'     => \$ldap_bindpw,
-    'U:s'          => \$ldap_binduri,
-    'binduri:s'    => \$ldap_binduri,
-    'S:s'          => \$slave_ldap_suffix,
-    'suffix:s'     => \$slave_ldap_suffix,
-    'M:s'          => \$master_ldap_suffix,
-    'mastersuffix:s'     => \$master_ldap_suffix,
-    'I:s'          => \$ldap_serverid,
-    'serverid:s'   => \$ldap_serverid,
-    's'            => \$ldap_singlemaster,
-    'singlemaster' => \$ldap_singlemaster,
+    'D:s'            => \$ldap_binddn,
+    'binddn:s'       => \$ldap_binddn,
+    'P:s'            => \$ldap_bindpw,
+    'bindpw:s'       => \$ldap_bindpw,
+    'U:s'            => \$ldap_binduri,
+    'binduri:s'      => \$ldap_binduri,
+    'S:s'            => \$slave_ldap_suffix,
+    'suffix:s'       => \$slave_ldap_suffix,
+    'M:s'            => \$master_ldap_suffix,
+    'mastersuffix:s' => \$master_ldap_suffix,
+    'I:s'            => \$ldap_serverid,
+    'serverid:s'     => \$ldap_serverid,
+    's'              => \$ldap_singlemaster,
+    'singlemaster'   => \$ldap_singlemaster,
 );
 
 # Fix SMNP Version
@@ -493,7 +493,6 @@ if ( !$slave_ldap_suffix ) {
         exit $ERRORS{'UNKNOWN'};
     }
 }
-
 
 # Get the master URI if not provided
 my $master_uri = $ldap_binduri;
