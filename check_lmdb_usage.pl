@@ -224,7 +224,7 @@ my $percent_pages = int( $pages_used / $max_pages * 100 );
 # Prepare PerfParse data
 #
 
-my $perfparse;
+my $perfparse = "";
 if ($perf_data) {
     $perfparse .=
       "|'percent_pages_used'=$percent_pages;$warning;$critical;0;100 ";
