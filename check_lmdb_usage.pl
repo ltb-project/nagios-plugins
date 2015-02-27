@@ -67,9 +67,6 @@ my $exclude;
 my $minute = 60;
 my $url;
 
-my $current = 0;
-my $maximum = 0;
-
 my $db_home;
 my $mdb_stat;
 
@@ -86,8 +83,6 @@ GetOptions(
     'critical:i' => \$critical,
     'f'          => \$perf_data,
     'perf_data'  => \$perf_data,
-    'current!'   => \$current,
-    'maximum!'   => \$maximum,
     'H:s'        => \$db_home,
     'db_home:s'  => \$db_home,
     'S:s'        => \$mdb_stat,
