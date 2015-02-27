@@ -9,7 +9,7 @@
 # Returns Nagios Code
 #
 # Copyright (C) 2004 Clement OUDOT
-# Copyright (C) 2009 LTB-project.org
+# Copyright (C) 2009-2015 LTB-project.org
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -24,178 +24,334 @@
 # GPL Licence : http://www.gnu.org/licenses/gpl.txt
 #====================================================================
 
-#====================================================================
-# Packages
-#====================================================================
+#==========================================================================
+# Version
+#==========================================================================
+my $VERSION          = '0.4';
+my $TEMPLATE_VERSION = '1.0.0';
+
+#==========================================================================
+# Modules
+#==========================================================================
 use strict;
+use lib
+  qw(/usr/local/nagios/libexec /usr/lib/nagios/plugins /usr/lib64/nagios/plugins);
+use utils qw /$TIMEOUT %ERRORS &print_revision &support/;
+use Getopt::Long;
+&Getopt::Long::config('bundling');
+use File::Basename;
 use Net::LDAP;
-use Getopt::Std;
 use Time::HiRes qw(gettimeofday);
 
-#====================================================================
-# Global parameters
-#====================================================================
-my $version = 3;
-my %code = ( Ok => 0, Warning => 1, Critical => 2, Unknown => 3 );
-my ( $host, $port, $binddn, $bindpw, $nb_threads, $warning, $critical ) =
-  &options;
+#==========================================================================
+# Options
+#==========================================================================
+my $progname = basename($0);
+my $help;
+my $version;
+my $verbose = 0;
+my $host;
+my $warning;
+my $critical;
+my $mode;
+my $logname;
+my $authentication;
+my $log_file;
+my $perf_data;
+my $name;
+my $port;
+my $timeout = $TIMEOUT;
+my $regexp;
+my $eregexp;
+my $exclude;
+my $minute = 60;
+my $url;
+
+# For LDAP plugins
+my $ldap_binddn;
+my $ldap_bindpw;
+my $ldap_filter;
+my $ldap_base;
+my $ldap_scope;
+
+my $nb_threads;
+
+GetOptions(
+    'h'            => \$help,
+    'help'         => \$help,
+    'V'            => \$version,
+    'version'      => \$version,
+    'v+'           => \$verbose,
+    'verbose+'     => \$verbose,
+    'H:s'          => \$host,
+    'host:s'       => \$host,
+    'w:i'          => \$warning,
+    'warning:i'    => \$warning,
+    'c:i'          => \$critical,
+    'critical:i'   => \$critical,
+    'm:s'          => \$mode,
+    'mode:s'       => \$mode,
+    'f'            => \$perf_data,
+    'perf_data'    => \$perf_data,
+    'p:i'          => \$port,
+    'port:i'       => \$port,
+    't:i'          => \$timeout,
+    'timeout:i'    => \$timeout,
+    'D:s'          => \$ldap_binddn,
+    'binddn:s'     => \$ldap_binddn,
+    'P:s'          => \$ldap_bindpw,
+    'bindpw:s'     => \$ldap_bindpw,
+    'F:s'          => \$ldap_filter,
+    'filter:s'     => \$ldap_filter,
+    'b:s'          => \$ldap_base,
+    'base:s'       => \$ldap_base,
+    's:s'          => \$ldap_scope,
+    'scope:s'      => \$ldap_scope,
+    'n:i'          => \$nb_threads,
+    'nb_threads:i' => \$nb_threads,
+);
+
+#==========================================================================
+# Usage
+#==========================================================================
+sub print_usage {
+    print "Usage: \n";
+    print "$progname -H <hostname> [-n nb_threads] [-h] [-v]\n\n";
+    print "Use option --help for more information\n\n";
+    print "$progname comes with ABSOLUTELY NO WARRANTY\n\n";
+}
+
+#=========================================================================
+# Version
+#=========================================================================
+if ($version) {
+    &print_revision( $progname,
+        "\$Revision: $VERSION (TPL: $TEMPLATE_VERSION)\$" );
+    exit $ERRORS{'UNKNOWN'};
+}
+
+#=========================================================================
+# Help
+#=========================================================================
+if ($help) {
+    &print_revision( $progname, "\$Revision: $VERSION\$" );
+
+    print "\n\nRequest LDAP server and monitor response time.\n\n";
+
+    &print_usage;
+
+    print "-v, --verbose\n";
+    print "\tPrint extra debugging information.\n";
+    print "-V, --version\n";
+    print "\tPrint version and exit.\n";
+    print "-h, --help\n";
+    print "\tPrint this help message and exit.\n";
+    print "-H, --host=STRING\n";
+    print
+"\tIP or name (FQDN) of the directory. You can use URI (ldap://, ldaps://, ldap+tls://)\n";
+    print "-p, --port=INTEGER\n";
+    print "\tDirectory port to connect to.\n";
+    print "-w, --warning=INTEGER\n";
+    print "\tTime limit to return a warning status.\n";
+    print "-c, --critical=DOUBLE\n";
+    print "\tTime limit to return a critical status.\n";
+    print "-f, --perf_data\n";
+    print "\tDisplay performance data.\n";
+    print "-t, --timeout=INTEGER\n";
+    print "\tSeconds before connection times out (default: $TIMEOUT).\n";
+    print "-D, --binddn=STRING\n";
+    print "\tBind DN. Bind anonymous if not present.\n";
+    print "-P, --bindpw=STRING\n";
+    print "\tBind passwd. Need the Bind DN option to work.\n";
+    print "-F, --filter=STRING\n";
+    print "\tLDAP search filter.\n";
+    print "-b, --base=STRING\n";
+    print "\tLDAP search base.\n";
+    print "-s, --scope=STRING\n";
+    print "\tLDAP search scope\n";
+    print "-n, --nb_threads=INTEGER\n";
+    print "\tNumber of threads\n";
+    print "\n";
+
+    &support;
+
+    exit $ERRORS{'UNKNOWN'};
+}
+
+#=========================================================================
+# Functions
+#=========================================================================
+
+# DEBUG function
+sub verbose {
+    my $output_code = shift;
+    my $text        = shift;
+    if ( $verbose >= $output_code ) {
+        printf "VERBOSE $output_code ===> %s\n", $text;
+    }
+}
+
+# check if -H is used
+sub check_host_param {
+    if ( !defined($host) ) {
+        printf "UNKNOWN: you have to define a hostname.\n";
+        exit $ERRORS{UNKNOWN};
+    }
+}
+
+# check if -w is used
+sub check_warning_param {
+    if ( !defined($warning) ) {
+        printf "UNKNOWN: you have to define a warning thresold.\n";
+        exit $ERRORS{UNKNOWN};
+    }
+}
+
+# check if -c is used
+sub check_critical_param {
+    if ( !defined($critical) ) {
+        printf "UNKNOWN: you have to define a critical thresold.\n";
+        exit $ERRORS{UNKNOWN};
+    }
+}
 
 #====================================================================
 # Main program
 #====================================================================
 
-main();
+# Options checks
+&check_host_param();
+&check_warning_param();
+&check_critical_param();
 
-sub main {
+# Default values
+$ldap_base ||= "";
+$ldap_scope ||= "base";
+$ldap_filter ||= "(objectClass=*)";
+$nb_threads ||= 0;
 
-    my $time;
+my $time;
 
-    if ($nb_threads) {
+if ($nb_threads) {
 
-        use threads;
+    use threads;
 
-        my @thread;
-        my $result = 0;
+    my @thread;
+    my $result = 0;
 
-        for ( my $i = 0 ; $i < $nb_threads ; $i++ ) {
-            $thread[$i] = threads->create( "test_ldap", undef );
-        }
-        for ( my $i = 0 ; $i < $nb_threads ; $i++ ) {
-            $result += $thread[$i]->join();
-        }
-
-        # Average time
-
-        $time = ( $result / $nb_threads );
-
+    for ( my $i = 0 ; $i < $nb_threads ; $i++ ) {
+        $thread[$i] = threads->create( "test_ldap", undef );
+    }
+    for ( my $i = 0 ; $i < $nb_threads ; $i++ ) {
+        $result += $thread[$i]->join();
     }
 
-    else {
-        $time = &test_ldap;
-    }
+    # Average time
+    $time = ( $result / $nb_threads );
+}
 
-    $time = substr( $time, 0, 5 );
+else {
+    $time = &test_ldap;
+}
 
-    # Nagios result
+$time = substr( $time, 0, 5 );
 
-    if ( $time < $warning ) {
-        print "LDAP Ok : $time second response time on port $port\n";
-        exit $code{Ok};
-    }
-    elsif ( $time < $critical ) {
-        print "LDAP Warning : $time second response time on port $port\n";
-        exit $code{Warning};
-    }
-    else {
-        print "LDAP Critical : $time second response time on port $port\n";
-        exit $code{Critical};
-    }
+#==========================================================================
+# Exit with Nagios codes
+#==========================================================================
+
+# Prepare PerfParse data
+#
+
+my $perfparse = "";
+if ($perf_data) {
+    $perfparse .=
+      "|'time'=$time;$warning;$critical;0";
+}
+
+if ( $time < $warning ) {
+    print "OK- $time second response time $perfparse\n";
+    exit $ERRORS{'OK'};
+}
+elsif ( $time < $critical ) {
+    print "WARNING - $time second response time $perfparse\n";
+    exit $ERRORS{'WARNING'};
+}
+else {
+    print "CRITICAL - $time second response time $perfparse\n";
+    exit $ERRORS{'CRITICAL'};
 }
 
 sub test_ldap {
 
     # Start timer
-
     my $start_time = gettimeofday();
 
     # LDAP Connection
-
     my $ldap = Net::LDAP->new(
         $host,
         port    => $port,
         version => $version,
-        timeout => $critical
+        timeout => $timeout,
     );
 
     unless ($ldap) {
-        print "LDAP Critical : Pb with LDAP connection\n";
-        exit $code{Critical};
+        print "CRITICAL - Problem with LDAP connection\n";
+        exit $ERRORS{'CRITICAL'};
     }
 
     # Bind
-
-    if ( $binddn && $bindpw ) {
+    if ( $ldap_binddn && $ldap_bindpw ) {
 
         # Bind witch credentials
-
-        my $req_bind = $ldap->bind( $binddn, password => $bindpw );
+        my $req_bind = $ldap->bind( $ldap_binddn, password => $ldap_bindpw );
 
         if ( $req_bind->code ) {
-            print "LDAP Unknown : Bind Error "
+            print "UNKNOWN - Bind Error "
               . $req_bind->code . " : "
               . $req_bind->error . "\n";
-            exit $code{Unknown};
+            exit $ERRORS{'UNKNOWN'};
         }
     }
 
     else {
 
         # Bind anonymous
-
         my $req_bind = $ldap->bind();
 
         if ( $req_bind->code ) {
-            print "LDAP Unknown : Bind Error "
+            print "UNKNOWN - Bind Error "
               . $req_bind->code . " : "
               . $req_bind->error . "\n";
-            exit $code{Unknown};
+            exit $ERRORS{'UNKNOWN'};
         }
     }
 
     # Base Search
-
     my $req_search = $ldap->search(
-        base   => '',
-        scope  => 'base',
-        filter => 'objectClass=*',
-        attrs  => ['1.1']
+        base   => $ldap_base,
+        scope  => $ldap_scope,
+        filter => $ldap_filter,
+        attrs  => ['1.1'],
     );
 
     if ( $req_search->code ) {
-        print "LDAP Unknown : Search Error "
+        print "UNKNOWN - Search Error "
           . $req_search->code . " : "
           . $req_search->error . "\n";
         $ldap->unbind;
-        exit $code{Unknown};
+        exit $ERRORS{'UNKNOWN'};
     }
 
     # Unbind
-
     $ldap->unbind();
 
     # Stop Timer
-
     my $end_time = gettimeofday();
 
     my $time = $end_time - $start_time;
 
     # Return $time
-
     return $time;
 }
 
-sub options {
-
-    # Get and check args
-    my %opts;
-    getopt( 'HpiDWnwc', \%opts );
-    &usage unless ( exists( $opts{"H"} ) );
-    $opts{"p"} = 389 unless ( exists( $opts{"p"} ) );
-    $opts{"D"} = 0   unless ( exists( $opts{"D"} ) );
-    $opts{"W"} = 0   unless ( exists( $opts{"W"} ) );
-    $opts{"n"} = 0   unless ( exists( $opts{"n"} ) );
-    $opts{"w"} = 20  unless ( exists( $opts{"w"} ) );
-    $opts{"c"} = 60  unless ( exists( $opts{"c"} ) );
-    return (
-        $opts{"H"}, $opts{"p"}, $opts{"D"}, $opts{"W"},
-        $opts{"n"}, $opts{"w"}, $opts{"c"}
-    );
-}
-
-sub usage {
-
-    # Print Help/Error message
-    print
-"LDAP Unknown : Usage :\n$0 -H hostname [-p port] [-D binddn -W bindpw] [-n nb_threads] [-w warning_time] [-c critical_time])\n";
-    exit $code{Unknown};
-}
