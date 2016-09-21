@@ -1,4 +1,4 @@
-# LDAP Tool Box Nagios plugion
+# LDAP Tool Box Nagios plugins
 
 This is a collection of Nagios plugins and event handlers designed to monitor LDAP directories.
 
