@@ -30,7 +30,7 @@
 #==========================================================================
 # Version
 #==========================================================================
-my $VERSION          = '0.4';
+my $VERSION          = '0.5';
 my $TEMPLATE_VERSION = '1.0.0';
 
 #==========================================================================
@@ -44,7 +44,7 @@ use Getopt::Long;
 use File::Basename;
 use POSIX;
 use Net::LDAP;
-use Date::Manip;
+use Time::Piece;
 
 #==========================================================================
 # Options
@@ -547,7 +547,15 @@ if ($errorcode) {
 # Compare the utime in CSN
 my @slavecsn_elts  = &parse_csn($slavecsn);
 my @mastercsn_elts = &parse_csn($mastercsn);
-my $deltacsn       = abs( $mastercsn_elts[0] - $slavecsn_elts[0] );
+my $time_master = Time::Piece->strptime( $mastercsn_elts[0], "%Y%m%d%H%M%S" );
+my $time_slave = Time::Piece->strptime( $slavecsn_elts[0], "%Y%m%d%H%M%S" );
+&verbose( '2', "Master times: $time_master" );
+&verbose( '2', "Slave times: $time_slave" );
+my $utime_master = $time_master->epoch;
+my $utime_slave  = $time_slave->epoch;
+&verbose( '2', "Master timestamp: $utime_master" );
+&verbose( '2', "Slave timestamp: $utime_slave" );
+my $deltacsn = $utime_master - $utime_slave;
 
 #==========================================================================
 # Exit with Nagios codes
