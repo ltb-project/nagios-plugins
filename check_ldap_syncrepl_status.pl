@@ -555,7 +555,7 @@ my $utime_master = $time_master->epoch;
 my $utime_slave  = $time_slave->epoch;
 &verbose( '2', "Master timestamp: $utime_master" );
 &verbose( '2', "Slave timestamp: $utime_slave" );
-my $deltacsn = $utime_master - $utime_slave;
+my $deltacsn = abs($utime_master - $utime_slave);
 
 #==========================================================================
 # Exit with Nagios codes
