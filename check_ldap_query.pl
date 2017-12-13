@@ -36,7 +36,8 @@ my $TEMPLATE_VERSION = '1.0.0';
 # Modules
 #==========================================================================
 use strict;
-use lib '/usr/local/nagios/libexec';
+use lib
+  qw(/usr/local/nagios/libexec /usr/lib/nagios/plugins /usr/lib64/nagios/plugins);
 use utils qw /$TIMEOUT %ERRORS &print_revision &support/;
 use Getopt::Long;
 &Getopt::Long::config('bundling');
