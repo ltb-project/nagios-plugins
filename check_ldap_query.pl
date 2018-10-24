@@ -297,12 +297,12 @@ sub check_critical_param {
         exit $ERRORS{UNKNOWN};
     }
 
-    if ( $mode eq "greater" and $critical >= $warning ) {
-        printf "With greater mode, warning should be greater than critical\n";
+    if ( $mode eq "lesser" and $critical >= $warning ) {
+        printf "With lesser mode, warning should be greater than critical\n";
         exit $ERRORS{UNKNOWN};
     }
-    elsif ( $mode eq "lesser" and $warning >= $critical ) {
-        printf "With lesser mode, warning should be lesser than critical\n";
+    elsif ( $mode eq "greater" and $warning >= $critical ) {
+        printf "With greater mode, warning should be lesser than critical\n";
         exit $ERRORS{UNKNOWN};
     }
 }
@@ -435,7 +435,7 @@ if ($perf_data) {
 }
 
 # Test the $nb_entries and exit
-if ( $mode eq "lesser" ) {
+if ( $mode eq "greater" ) {
     if ( $nb_entries < $warning ) {
         print "OK - $nb_entries entries returned $perfparse\n";
         exit $ERRORS{'OK'};
@@ -449,7 +449,7 @@ if ( $mode eq "lesser" ) {
         exit $ERRORS{'CRITICAL'};
     }
 }
-elsif ( $mode eq "greater" ) {
+elsif ( $mode eq "lesser" ) {
     if ( $nb_entries > $warning ) {
         print "OK - $nb_entries entries returned $perfparse\n";
         exit $ERRORS{'OK'};
