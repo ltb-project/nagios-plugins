@@ -272,6 +272,7 @@ sub verbose {
 sub check_host_param {
     if ( !defined($host) ) {
         printf "UNKNOWN: you have to define a hostname.\n";
+        &print_usage;
         exit $ERRORS{UNKNOWN};
     }
 }
@@ -279,7 +280,8 @@ sub check_host_param {
 # check if -w is used
 sub check_warning_param {
     if ( !defined($warning) ) {
-        printf "UNKNOWN: you have to define a warning thresold.\n";
+        printf "UNKNOWN: you have to define a warning threshold.\n";
+        &print_usage;
         exit $ERRORS{UNKNOWN};
     }
 }
@@ -287,7 +289,8 @@ sub check_warning_param {
 # check if -c is used
 sub check_critical_param {
     if ( !defined($critical) ) {
-        printf "UNKNOWN: you have to define a critical thresold.\n";
+        printf "UNKNOWN: you have to define a critical threshold.\n";
+        &print_usage;
         exit $ERRORS{UNKNOWN};
     }
 }
@@ -331,7 +334,7 @@ sub get_ldapconn {
         $message->code
           && &verbose( '1', $message->error )
           && return ( $message->code, $message->error );
-        &verbose( '2', "startTLS succeed on $server" );
+        &verbose( '2', "startTLS success on $server" );
     }
 
     if ( $binddn && $bindpw ) {
@@ -348,7 +351,7 @@ sub get_ldapconn {
         $req_bind->code
           && &verbose( '1', $req_bind->error )
           && return ( $req_bind->code, $req_bind->error );
-        &verbose( '2', "Bind anonym" );
+        &verbose( '2', "Bind anonymous" );
     }
     &verbose( '3', "Leave &get_ldapconn" );
     return ( '0', $ldap );
@@ -398,7 +401,7 @@ sub get_suffix {
       && return ( $message->code, $message->error );
     $entry = $message->entry(0);
     return ( 1, "No data" ) unless $entry;
-    &verbose( '2', "Found Suffix: " . $entry->get_value('namingcontexts') );
+    &verbose( '2', "Found suffix: " . $entry->get_value('namingcontexts') );
     &verbose( '3', "Leave &get_suffix" );
     return ( 0, $entry->get_value('namingcontexts') );
 }
