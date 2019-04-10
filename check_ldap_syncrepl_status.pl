@@ -272,6 +272,7 @@ sub verbose {
 sub check_host_param {
     if ( !defined($host) ) {
         printf "UNKNOWN: you have to define a hostname.\n";
+        &print_usage;
         exit $ERRORS{UNKNOWN};
     }
 }
@@ -280,6 +281,7 @@ sub check_host_param {
 sub check_warning_param {
     if ( !defined($warning) ) {
         printf "UNKNOWN: you have to define a warning threshold.\n";
+        &print_usage;
         exit $ERRORS{UNKNOWN};
     }
 }
@@ -288,6 +290,7 @@ sub check_warning_param {
 sub check_critical_param {
     if ( !defined($critical) ) {
         printf "UNKNOWN: you have to define a critical threshold.\n";
+        &print_usage;
         exit $ERRORS{UNKNOWN};
     }
 }
