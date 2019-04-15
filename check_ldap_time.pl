@@ -270,7 +270,7 @@ if ($perf_data) {
 }
 
 if ( $time < $warning ) {
-    print "OK- $time second response time $perfparse\n";
+    print "OK - $time second response time $perfparse\n";
     exit $ERRORS{'OK'};
 }
 elsif ( $time < $critical ) {
