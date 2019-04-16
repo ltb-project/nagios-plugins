@@ -209,10 +209,9 @@ if ($help) {
     print "\t\topscompleted: the number of operations the server has completed since it started\n";
     print "\t\tentriessent: the number of entries sent to clients since the server started\n";
     print "\t\tbytessent: the number of bytes sent to clients since the server started\n";
-    print "\t\tcurrentime: the time when this snapshot of the server was taken\n";
+    print "\t\tcurrenttime: the time when this snapshot of the server was taken\n";
     print "\t\tstarttime: the time when the server started\n";
     print "\t\tnbackends: the number of backends (databases)\n";
-    print "\t\tbackendmonitordn: the DN of each directory database\n";
 
     #print "-l, --logname=STRING\n";
     #print "\tUser id for login.\n";
@@ -410,8 +409,12 @@ $mode ||= "lesser";
 # Options checks
 &check_host_param();
 &check_type();
-&check_warning_param();
-&check_critical_param();
+
+unless ($type =~ /^(version|currenttime|starttime|nbackends)$/) {
+    &check_warning_param();
+    &check_critical_param();
+}
+
 
 my $errorcode;
 
@@ -517,12 +520,12 @@ if ( $type =~ /bytessent/i ) {
     $ldap_attribute = "bytessent";
     $type_defined   = 1;
 }
-if ( $type =~ /currentime/i ) {
-    $type_string = "currentime";
+if ( $type =~ /currenttime/i ) {
+    $type_string = "currenttime";
     $ldap_filter ||= "(objectClass=*)";
     $ldap_scope  ||= "base";
     $ldap_base   ||= "cn=Monitor";
-    $ldap_attribute = "currentime";
+    $ldap_attribute = "currenttime";
     $type_defined   = 1;
 }
 if ( $type =~ /starttime/i ) {
@@ -539,14 +542,6 @@ if ( $type =~ /nbackends/i ) {
     $ldap_scope  ||= "base";
     $ldap_base   ||= "cn=Monitor";
     $ldap_attribute = "nbackends";
-    $type_defined   = 1;
-}
-if ( $type =~ /backendmonitordn/i ) {
-    $type_string = "backendmonitordn";
-    $ldap_filter ||= "(objectClass=*)";
-    $ldap_scope  ||= "base";
-    $ldap_base   ||= "cn=Monitor";
-    $ldap_attribute = "backendmonitordn";
     $type_defined   = 1;
 }
 unless ($type_defined) {
@@ -575,6 +570,11 @@ if ($perf_data) {
 }
 
 # Test value and exit
+if ( $type =~ /^(version|currenttime|starttime|nbackends)$/) {
+   print "$value\n";
+   exit $ERRORS{'OK'};
+}
+
 if ( $mode eq "greater" ) {
     if ( $value < $warning ) {
         print "OK - $value $type_string returned $perfparse\n";
