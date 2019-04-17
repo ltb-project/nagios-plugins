@@ -564,12 +564,12 @@ if ($errorcode) {
 #==========================================================================
 
 # Prepare PerfParse data
+my $perfparse = " ";
 if ($perf_data) {
     if ($warning == "") { $warning = 0; }
     if ($critical == "") { $critical = 0; }
     $perfparse = "|'$type'=" . $value . ";$warning;$critical";
 }
-
 
 # Test value and exit
 if ( $type =~ /^(version|currenttime|starttime|nbackends)$/) {
