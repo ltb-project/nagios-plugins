@@ -3,7 +3,7 @@
 #==========================================================================
 # Summary
 #==========================================================================
-# Check LDAP query
+# Check 389DS Monitor
 #
 # Request an 389DS monitor backend, based on OpenLDAP version.
 #
