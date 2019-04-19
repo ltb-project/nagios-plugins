@@ -212,6 +212,19 @@ if ($help) {
     print "\t\tcurrenttime: the time when this snapshot of the server was taken\n";
     print "\t\tstarttime: the time when the server started\n";
     print "\t\tnbackends: the number of backends (databases)\n";
+    print "\t\treadonly: is the userRoot LMDB DB in readonly, 0 no, 1 yes.\n";
+    print "\t\tentrycachehits: The total number of successful entry cache lookups.\n";
+    print "\t\tentrycachetries: The total number of entry cache lookups since the directory was last started\n";
+    print "\t\tentrycachehitratio: Ratio that indicates the number of entry cache tries to successful entry cache lookups.\n";
+    print "\t\tcurrententrycachecount: The number of entries currently present in the entry cache.\n";
+    print "\t\tcurrententrycachesize: The total size, in bytes, of directory entries currently present in the entry cache.\n";
+    print "\t\tmaxentrycachesize: The maximum size, in bytes, of directory entries that can be maintained in the entry cache.\n";
+    print "\t\tdncachehitratio: Ratio that indicates the number of DN cache tries to successful DN cache lookups.\n";
+    print "\t\tdncachehits: The total number of successful DN cache lookups.\n";
+    print "\t\tdncachetries: The total number of DNs cache lookups since the directory was last started.\n";
+    print "\t\tcurrentdncachecount: The number of entries currently present in the DN cache.\n";
+    print "\t\tcurrentdncachesize: The total size, in bytes, of directory entries currently present in the DN cache.\n";
+    print "\t\tmaxdncachesize: The maximum size, in bytes, of directory entries that can be maintained in the DN cache.\n";
 
     #print "-l, --logname=STRING\n";
     #print "\tUser id for login.\n";
@@ -410,11 +423,10 @@ $mode ||= "lesser";
 &check_host_param();
 &check_type();
 
-unless ($type =~ /^(version|currenttime|starttime|nbackends)$/) {
+unless ($type =~ /^(version|currenttime|starttime|nbackends|readonly|maxentrycachesize|maxdncachesize)$/) {
     &check_warning_param();
     &check_critical_param();
 }
-
 
 my $errorcode;
 
@@ -439,6 +451,7 @@ if ($errorcode) {
 }
 
 # Convert type into Monitor LDAP parameters
+# generic cn=monitor
 my $type_defined = 0;
 if ( $type =~ /version/i ) {
     $type_string = "version";
@@ -544,6 +557,114 @@ if ( $type =~ /nbackends/i ) {
     $ldap_attribute = "nbackends";
     $type_defined   = 1;
 }
+
+# userRoot DB specific checks
+if ( $type =~ /readonly/i ) {
+    $type_string = "readonly";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=monitor,cn=userRoot,cn=ldbm database,cn=plugins,cn=config";
+    $ldap_attribute = "readonly";
+    $type_defined   = 1;
+}
+if ( $type =~ /entrycachehits/i ) {
+    $type_string = "entrycachehits";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=monitor,cn=userRoot,cn=ldbm database,cn=plugins,cn=config";
+    $ldap_attribute = "entrycachehits";
+    $type_defined   = 1;
+}
+if ( $type =~ /entrycachetries/i ) {
+    $type_string = "entrycachetries";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=monitor,cn=userRoot,cn=ldbm database,cn=plugins,cn=config";
+    $ldap_attribute = "entrycachetries";
+    $type_defined   = 1;
+}
+if ( $type =~ /entrycachehitratio/i ) {
+    $type_string = "entrycachehitratio";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=monitor,cn=userRoot,cn=ldbm database,cn=plugins,cn=config";
+    $ldap_attribute = "entrycachehitratio";
+    $type_defined   = 1;
+}
+if ( $type =~ /currententrycachecount/i ) {
+    $type_string = "currententrycachecount";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=monitor,cn=userRoot,cn=ldbm database,cn=plugins,cn=config";
+    $ldap_attribute = "currententrycachecount";
+    $type_defined   = 1;
+}
+if ( $type =~ /currententrycachesize/i ) {
+    $type_string = "currententrycachesize";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=monitor,cn=userRoot,cn=ldbm database,cn=plugins,cn=config";
+    $ldap_attribute = "currententrycachesize";
+    $type_defined   = 1;
+}
+if ( $type =~ /maxentrycachesize/i ) {
+    $type_string = "maxentrycachesize";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=monitor,cn=userRoot,cn=ldbm database,cn=plugins,cn=config";
+    $ldap_attribute = "maxentrycachesize";
+    $type_defined   = 1;
+}
+if ( $type =~ /dncachehitratio/i ) {
+    $type_string = "dncachehitratio";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=monitor,cn=userRoot,cn=ldbm database,cn=plugins,cn=config";
+    $ldap_attribute = "dncachehitratio";
+    $type_defined   = 1;
+}
+if ( $type =~ /dncachehits/i ) {
+    $type_string = "dncachehits";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=monitor,cn=userRoot,cn=ldbm database,cn=plugins,cn=config";
+    $ldap_attribute = "dncachehits";
+    $type_defined   = 1;
+}
+if ( $type =~ /dncachetries/i ) {
+    $type_string = "dncachetries";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=monitor,cn=userRoot,cn=ldbm database,cn=plugins,cn=config";
+    $ldap_attribute = "dncachetries";
+    $type_defined   = 1;
+}
+if ( $type =~ /currentdncachecount/i ) {
+    $type_string = "currentdncachecount";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=monitor,cn=userRoot,cn=ldbm database,cn=plugins,cn=config";
+    $ldap_attribute = "currentdncachecount";
+    $type_defined   = 1;
+}
+if ( $type =~ /currentdncachesize/i ) {
+    $type_string = "currentdncachesize";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=monitor,cn=userRoot,cn=ldbm database,cn=plugins,cn=config";
+    $ldap_attribute = "currentdncachesize";
+    $type_defined   = 1;
+}
+if ( $type =~ /maxdncachesize/i ) {
+    $type_string = "maxdncachesize";
+    $ldap_filter ||= "(objectClass=*)";
+    $ldap_scope  ||= "base";
+    $ldap_base   ||= "cn=monitor,cn=userRoot,cn=ldbm database,cn=plugins,cn=config";
+    $ldap_attribute = "maxdncachesize";
+    $type_defined   = 1;
+}
+
+# type not known
 unless ($type_defined) {
     print "Type $type is not known.\n";
     exit $ERRORS{'UNKNOWN'};
@@ -572,7 +693,7 @@ if ($perf_data) {
 }
 
 # Test value and exit
-if ( $type =~ /^(version|currenttime|starttime|nbackends)$/) {
+if ( $type =~ /^(version|currenttime|starttime|nbackends|readonly|maxentrycachesize|maxdncachesize)$/) {
    print "$value\n";
    exit $ERRORS{'OK'};
 }
