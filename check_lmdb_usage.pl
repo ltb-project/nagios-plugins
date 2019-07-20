@@ -29,7 +29,7 @@
 #==========================================================================
 # Version
 #==========================================================================
-my $VERSION          = '0.1';
+my $VERSION          = '0.7';
 my $TEMPLATE_VERSION = '1.0.0';
 
 #==========================================================================
@@ -178,17 +178,41 @@ sub check_critical_param {
     }
 }
 
+sub check_mdbstat_param {
+    if ( !-x $mdb_stat ) {
+        printf "UNKNOWN: $mdb_stat is not executable\n";
+        exit $ERRORS{UNKNOWN};
+    }
+}
+
+sub check_dbhome_param {
+    if ( !-d $db_home ) {
+        printf "UNKNOWN: $db_home is not a directory\n";
+        exit $ERRORS{UNKNOWN};
+    }
+    if ( !-x $db_home ) {
+        printf "UNKNOWN: $db_home can not be opened\n";
+        exit $ERRORS{UNKNOWN};
+    }
+    if ( !-r "$db_home/data.mdb" ) {
+        printf "UNKNOWN: $db_home/data.mdb is not readable\n";
+        exit $ERRORS{UNKNOWN};
+    }
+}
+
 #=========================================================================
 # Main
 #=========================================================================
+
+# Default values
+$mdb_stat ||= "/usr/local/openldap/sbin/mdb_stat";
 
 # Options checks
 &check_db_home_param();
 &check_warning_param();
 &check_critical_param();
-
-# Default values
-$mdb_stat ||= "/usr/local/openldap/sbin/mdb_stat";
+&check_mdbstat_param();
+&check_dbhome_param();
 
 # Run mdb_stat
 #
