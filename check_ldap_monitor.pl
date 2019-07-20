@@ -29,7 +29,7 @@
 #==========================================================================
 # Version
 #==========================================================================
-my $VERSION          = '0.5';
+my $VERSION          = '0.7';
 my $TEMPLATE_VERSION = '1.0.0';
 
 #==========================================================================
@@ -348,7 +348,7 @@ sub get_ldapconn {
     &verbose( '2', "Connected to $server" );
 
     if ($useTls) {
-        my %h = split( /[&=]/, $tlsParam );
+        my %h       = split( /[&=]/, $tlsParam );
         my $message = $ldap->start_tls(%h);
         $message->code
           && &verbose( '1', $message->error )
@@ -392,6 +392,10 @@ sub get_value {
       && return ( $message->code, $message->error );
     if ( $entry = $message->shift_entry() ) {
         my $result = $entry->get_value($attribute);
+        unless ($result) {
+            &verbose( 1, "Attribute $attribute not found in " . $entry->dn );
+            return ( 1, "Attribute $attribute not found" );
+        }
         &verbose( '2', "Found value $result" );
         &verbose( '3', "Leave &get_value" );
         return ( 0, $result );
