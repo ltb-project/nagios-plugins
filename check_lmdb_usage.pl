@@ -66,27 +66,30 @@ my $eregexp;
 my $exclude;
 my $minute = 60;
 my $url;
+my $check_free_pages;
 
 my $db_home;
 my $mdb_stat;
 
 GetOptions(
-    'h'          => \$help,
-    'help'       => \$help,
-    'V'          => \$version,
-    'version'    => \$version,
-    'v+'         => \$verbose,
-    'verbose+'   => \$verbose,
-    'w:i'        => \$warning,
-    'warning:i'  => \$warning,
-    'c:i'        => \$critical,
-    'critical:i' => \$critical,
-    'f'          => \$perf_data,
-    'perf_data'  => \$perf_data,
-    'H:s'        => \$db_home,
-    'db_home:s'  => \$db_home,
-    'S:s'        => \$mdb_stat,
-    'db_stat:s'  => \$mdb_stat,
+    'h'                => \$help,
+    'help'             => \$help,
+    'V'                => \$version,
+    'version'          => \$version,
+    'v+'               => \$verbose,
+    'verbose+'         => \$verbose,
+    'w:i'              => \$warning,
+    'warning:i'        => \$warning,
+    'c:i'              => \$critical,
+    'critical:i'       => \$critical,
+    'f'                => \$perf_data,
+    'perf_data'        => \$perf_data,
+    'H:s'              => \$db_home,
+    'db_home:s'        => \$db_home,
+    'S:s'              => \$mdb_stat,
+    'db_stat:s'        => \$mdb_stat,
+    'r'                => \$check_free_pages,
+    'check_free_pages' => \$check_free_pages,
 );
 
 #==========================================================================
@@ -129,11 +132,13 @@ if ($help) {
     print "-S, --mdb_stat=STRING\n";
     print "\tPath to mdb_stat utility.\n";
     print "-w, --warning=INTEGER\n";
-    print "\tPercent of pages used to send a warning status.\n";
+    print "\tPercent of pages used/free to send a warning status.\n";
     print "-c, --critical=DOUBLE\n";
-    print "\tPercent of pages used a critical status.\n";
+    print "\tPercent of pages used/free to send a critical status.\n";
     print "-f, --perf_data\n";
     print "\tDisplay performance data.\n";
+    print "-r, --check_free_pages\n";
+    print "\tCheck free pages instead of used pages.\n";
     print "\n";
 
     &support;
@@ -216,10 +221,11 @@ $mdb_stat ||= "/usr/local/openldap/sbin/mdb_stat";
 
 # Run mdb_stat
 #
-my @result = `$mdb_stat -e $db_home`;
+my @result = `$mdb_stat -ef $db_home`;
 
 my $max_pages  = 0;
 my $pages_used = 0;
+my $pages_free = 0;
 
 foreach (@result) {
     if ( $_ =~ m/\s+Max pages:\s(\d+)/ ) {
@@ -228,7 +234,9 @@ foreach (@result) {
     if ( $_ =~ m/\s+Number of pages used:\s(\d+)/ ) {
         $pages_used = $1;
     }
-
+    if ( $_ =~ m/\s+Free pages:\s(\d+)/ ) {
+        $pages_free = $1;
+    }
 }
 
 #==========================================================================
@@ -238,30 +246,50 @@ foreach (@result) {
 # Check percent of pages
 #
 
-my $percent_pages = int( $pages_used / $max_pages * 100 );
-
+my $percent_used = int( $pages_used / $max_pages * 100 );
+my $percent_free = int( $pages_free / $max_pages * 100 );
+#
 # Prepare PerfParse data
 #
 
 my $perfparse = "";
 if ($perf_data) {
     $perfparse .=
-      "|'percent_pages_used'=$percent_pages;$warning;$critical;0;100 ";
+        "|'percent_pages_"
+      . ( $check_free_pages ? "free"        : "used" ) . "'="
+      . ( $check_free_pages ? $percent_free : $percent_used )
+      . ";$warning;$critical;0;100 ";
 }
 
 # Check CRITICAL/WARNING/OK
 #
-if ( $percent_pages > $critical ) {
-    print "CRITICAL - $percent_pages% pages used $perfparse\n";
-    exit $ERRORS{'CRITICAL'};
+if ($check_free_pages) {
+    if ( $percent_free < $critical ) {
+        print "CRITICAL - $percent_free% pages free $perfparse\n";
+        exit $ERRORS{'CRITICAL'};
+    }
+    if ( $percent_free < $warning ) {
+        print "WARNING - $percent_free% pages free $perfparse\n";
+        exit $ERRORS{'WARNING'};
+    }
+    if ( $percent_free >= $warning ) {
+        print "OK - $percent_free% pages free $perfparse\n";
+        exit $ERRORS{'OK'};
+    }
 }
-if ( $percent_pages > $warning ) {
-    print "WARNING - $percent_pages% pages used, $perfparse\n";
-    exit $ERRORS{'WARNING'};
-}
-if ( $percent_pages <= $warning ) {
-    print "OK - $percent_pages% pages used $perfparse\n";
-    exit $ERRORS{'OK'};
+else {
+    if ( $percent_used > $critical ) {
+        print "CRITICAL - $percent_used% pages used $perfparse\n";
+        exit $ERRORS{'CRITICAL'};
+    }
+    if ( $percent_used > $warning ) {
+        print "WARNING - $percent_used% pages used $perfparse\n";
+        exit $ERRORS{'WARNING'};
+    }
+    if ( $percent_used <= $warning ) {
+        print "OK - $percent_used% pages used $perfparse\n";
+        exit $ERRORS{'OK'};
+    }
 }
 
 exit $ERRORS{'UNKNOWN'};
