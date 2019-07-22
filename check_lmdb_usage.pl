@@ -255,39 +255,42 @@ my $percent_free = int( $pages_free / $max_pages * 100 );
 my $perfparse = "";
 if ($perf_data) {
     $perfparse .=
-        "|'percent_pages_"
-      . ( $check_free_pages ? "free"        : "used" ) . "'="
-      . ( $check_free_pages ? $percent_free : $percent_used )
-      . ";$warning;$critical;0;100 ";
+        "|'percent_pages_used'=$percent_used%;"
+      . ( $check_free_pages ? "" : "$warning;$critical;" )
+      . "0;100,"
+      . "'percent_pages_free'=$percent_free%;"
+      . ( $check_free_pages ? "$warning;$critical;" : "" )
+      . "0;100 ";
 }
 
 # Check CRITICAL/WARNING/OK
 #
+my $message = "$percent_used% pages used / $percent_free% pages free";
 if ($check_free_pages) {
     if ( $percent_free < $critical ) {
-        print "CRITICAL - $percent_free% pages free $perfparse\n";
+        print "CRITICAL - $message $perfparse\n";
         exit $ERRORS{'CRITICAL'};
     }
     if ( $percent_free < $warning ) {
-        print "WARNING - $percent_free% pages free $perfparse\n";
+        print "WARNING - $message $perfparse\n";
         exit $ERRORS{'WARNING'};
     }
     if ( $percent_free >= $warning ) {
-        print "OK - $percent_free% pages free $perfparse\n";
+        print "OK - $message $perfparse\n";
         exit $ERRORS{'OK'};
     }
 }
 else {
     if ( $percent_used > $critical ) {
-        print "CRITICAL - $percent_used% pages used $perfparse\n";
+        print "CRITICAL - $message $perfparse\n";
         exit $ERRORS{'CRITICAL'};
     }
     if ( $percent_used > $warning ) {
-        print "WARNING - $percent_used% pages used $perfparse\n";
+        print "WARNING - $message $perfparse\n";
         exit $ERRORS{'WARNING'};
     }
     if ( $percent_used <= $warning ) {
-        print "OK - $percent_used% pages used $perfparse\n";
+        print "OK - $message $perfparse\n";
         exit $ERRORS{'OK'};
     }
 }
