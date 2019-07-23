@@ -214,6 +214,9 @@ if ($help) {
     print "\t\ttotalmodrdn: total MODRDN operations\n";
     print "\t\ttotalsearch: total SEARCH operations\n";
     print "\t\ttotalunbind: total UNBIND operations\n";
+    print "\t\tmdbpagesmax: maximum pages in MDB database\n";
+    print "\t\tmdbpageused: used pages in MDB database\n";
+    print "\t\tmdbpagesfree: free pages in MDB database\n";
 
     #print "-l, --logname=STRING\n";
     #print "\tUser id for login.\n";
@@ -568,6 +571,30 @@ if ( $type =~ /totalunbind/i ) {
     $ldap_scope  ||= "base";
     $ldap_base   ||= "cn=Unbind,cn=Operations,cn=Monitor";
     $ldap_attribute = "monitorOpCompleted";
+    $type_defined   = 1;
+}
+if ( $type =~ /mdbpagesmax/i ) {
+    $type_string = "maximum pages in MDB database";
+    $ldap_filter ||= "(objectClass=olmMDBDatabase)";
+    $ldap_scope  ||= "one";
+    $ldap_base   ||= "cn=Databases,cn=Monitor";
+    $ldap_attribute = "olmMDBPagesMax";
+    $type_defined   = 1;
+}
+if ( $type =~ /mdbpagesused/i ) {
+    $type_string = "used pages in MDB database";
+    $ldap_filter ||= "(objectClass=olmMDBDatabase)";
+    $ldap_scope  ||= "one";
+    $ldap_base   ||= "cn=Databases,cn=Monitor";
+    $ldap_attribute = "olmMDBPagesUsed";
+    $type_defined   = 1;
+}
+if ( $type =~ /mdbpagesfree/i ) {
+    $type_string = "free pages in MDB database";
+    $ldap_filter ||= "(objectClass=olmMDBDatabase)";
+    $ldap_scope  ||= "one";
+    $ldap_base   ||= "cn=Databases,cn=Monitor";
+    $ldap_attribute = "olmMDBPagesFree";
     $type_defined   = 1;
 }
 
