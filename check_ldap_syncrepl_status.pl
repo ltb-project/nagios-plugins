@@ -30,7 +30,7 @@
 #==========================================================================
 # Version
 #==========================================================================
-my $VERSION          = '0.8';
+my $VERSION          = '0.9';
 my $TEMPLATE_VERSION = '1.0.0';
 
 #==========================================================================
@@ -582,7 +582,7 @@ else {
 "OK - directories are not in sync - $deltacsn seconds late (W:$warning - C:$critical)$perfparse";
         exit $ERRORS{'OK'};
     }
-    elsif ( $deltacsn > $warning and $deltacsn < $critical ) {
+    elsif ( $deltacsn >= $warning and $deltacsn < $critical ) {
         print
 "WARNING - directories are not in sync - $deltacsn seconds late (W:$warning - C:$critical)$perfparse";
         exit $ERRORS{'WARNING'};
