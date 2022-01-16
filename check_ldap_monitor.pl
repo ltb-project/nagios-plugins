@@ -140,6 +140,10 @@ GetOptions(
     'bindpw:s' => \$ldap_bindpw,
     'b:s'      => \$ldap_base,
     'base:s'   => \$ldap_base,
+    's:s'      => \$ldap_scope,
+    'scope:s'  => \$ldap_scope,
+    'F:s'      => \$ldap_filter,
+    'filter:s' => \$ldap_filter,
 );
 
 # Fix SMNP Version
@@ -215,8 +219,10 @@ if ($help) {
     print "\t\ttotalsearch: total SEARCH operations\n";
     print "\t\ttotalunbind: total UNBIND operations\n";
     print "\t\tmdbpagesmax: maximum pages in MDB database\n";
-    print "\t\tmdbpageused: used pages in MDB database\n";
+    print "\t\tmdbpagesused: used pages in MDB database\n";
     print "\t\tmdbpagesfree: free pages in MDB database\n";
+    print "\t\tmdbpagesusedrelative: percent of used pages in MDB database\n";
+    print "\t\tmdbpagesfreerelative: percent of free pages in MDB database\n";
 
     #print "-l, --logname=STRING\n";
     #print "\tUser id for login.\n";
@@ -384,24 +390,29 @@ sub get_value {
     my ( $ldapconn, $base, $scope, $filter, $attribute ) = @_;
     my $message;
     my $entry;
+    my $attrs = ref($attribute) eq 'ARRAY' ? $attribute : [$attribute];
     $message = $ldapconn->search(
         base   => $base,
         scope  => $scope,
         filter => $filter,
-        attrs  => [$attribute]
+        attrs  => $attrs
     );
     $message->code
       && &verbose( '1', $message->error )
       && return ( $message->code, $message->error );
     if ( $entry = $message->shift_entry() ) {
-        my $result = $entry->get_value($attribute);
-        unless ($result) {
-            &verbose( 1, "Attribute $attribute not found in " . $entry->dn );
-            return ( 1, "Attribute $attribute not found" );
+        my @result = ();
+        for (@$attrs) {
+            my $val = $entry->get_value($_);
+            unless ($val) {
+                &verbose( 1, "Attribute $_ not found in " . $entry->dn );
+                return ( 1, "Attribute $_ not found" );
+            }
+            push(@result, $val);
         }
-        &verbose( '2', "Found value $result" );
+        &verbose( '2', "Found value @result" );
         &verbose( '3', "Leave &get_value" );
-        return ( 0, $result );
+        return (0, @result == 1 ? $result[0] : $result[0] * 100 / $result[1]);
     }
     else {
         return ( '1', "No entry found" );
@@ -595,6 +606,24 @@ if ( $type =~ /mdbpagesfree/i ) {
     $ldap_scope  ||= "one";
     $ldap_base   ||= "cn=Databases,cn=Monitor";
     $ldap_attribute = "olmMDBPagesFree";
+    $type_defined   = 1;
+}
+
+if ( $type =~ /mdbpagesusedrelative/i ) {
+    $type_string = "percent of used pages in MDB database";
+    $ldap_filter ||= "(objectClass=olmMDBDatabase)";
+    $ldap_scope  ||= "one";
+    $ldap_base   ||= "cn=Databases,cn=Monitor";
+    $ldap_attribute = ["olmMDBPagesUsed", "olmMDBPagesMax"];
+    $type_defined   = 1;
+}
+
+if ( $type =~ /mdbpagesfreerelative/i ) {
+    $type_string = "percent of free pages in MDB database";
+    $ldap_filter ||= "(objectClass=olmMDBDatabase)";
+    $ldap_scope  ||= "one";
+    $ldap_base   ||= "cn=Databases,cn=Monitor";
+    $ldap_attribute = ["olmMDBPagesFree", "olmMDBPagesMax"];
     $type_defined   = 1;
 }
 
