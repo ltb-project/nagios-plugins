@@ -246,8 +246,8 @@ foreach (@result) {
 # Check percent of pages
 #
 
-my $percent_used = int( $pages_used / $max_pages * 100 );
-my $percent_free = int( $pages_free / $max_pages * 100 );
+my $percent_used = int( ($pages_used - $pages_free) / $max_pages * 100 );
+my $percent_free = int( (1 - (($pages_used - $pages_free) / $max_pages)) * 100 );
 #
 # Prepare PerfParse data
 #

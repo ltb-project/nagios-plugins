@@ -221,8 +221,8 @@ if ($help) {
     print "\t\tmdbpagesmax: maximum pages in MDB database\n";
     print "\t\tmdbpagesused: used pages in MDB database\n";
     print "\t\tmdbpagesfree: free pages in MDB database\n";
-    print "\t\tmdbpagesusedrelative: percent of used pages in MDB database\n";
-    print "\t\tmdbpagesfreerelative: percent of free pages in MDB database\n";
+    print "\t\tmdbpagesusedrelative: percent of used pages in MDB database 100 * ( (pages used - pages free) / max pages ) \n";
+    print "\t\tmdbpagesfreerelative: percent of free pages in MDB database 100 * ( 1 - (pages used - pages free) / max pages ) \n";
 
     #print "-l, --logname=STRING\n";
     #print "\tUser id for login.\n";
@@ -412,7 +412,16 @@ sub get_value {
         }
         &verbose( '2', "Found value @result" );
         &verbose( '3', "Leave &get_value" );
-        return (0, @result == 1 ? $result[0] : $result[0] * 100 / $result[1]);
+
+        if ( $type =~ /mdbpagesusedrelative/i ) {
+            $result[0] = 100 * ( $result[0] - $result[1] ) / $result[2];
+        }
+        if ( $type =~ /mdbpagesfreerelative/i ) {
+            $result[0] = 100 * ( 1 - ( $result[0] - $result[1] ) / $result[2] );
+        }
+
+
+        return (0, $result[0]);
     }
     else {
         return ( '1', "No entry found" );
@@ -614,7 +623,7 @@ if ( $type =~ /mdbpagesusedrelative/i ) {
     $ldap_filter ||= "(objectClass=olmMDBDatabase)";
     $ldap_scope  ||= "one";
     $ldap_base   ||= "cn=Databases,cn=Monitor";
-    $ldap_attribute = ["olmMDBPagesUsed", "olmMDBPagesMax"];
+    $ldap_attribute = ["olmMDBPagesUsed", "olmMDBPagesFree", "olmMDBPagesMax"];
     $type_defined   = 1;
 }
 
@@ -623,7 +632,7 @@ if ( $type =~ /mdbpagesfreerelative/i ) {
     $ldap_filter ||= "(objectClass=olmMDBDatabase)";
     $ldap_scope  ||= "one";
     $ldap_base   ||= "cn=Databases,cn=Monitor";
-    $ldap_attribute = ["olmMDBPagesFree", "olmMDBPagesMax"];
+    $ldap_attribute = ["olmMDBPagesUsed", "olmMDBPagesFree", "olmMDBPagesMax"];
     $type_defined   = 1;
 }
 
