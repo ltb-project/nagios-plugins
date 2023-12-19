@@ -22,7 +22,7 @@ restart_slapd() {
 		echo "Can't read PID file $SLAPD_PID_FILE"
 		exit 1
 	else
-		PID=`cat $SLAPD_PID_FILE`
+		PID=$(cat $SLAPD_PID_FILE)
 		kill -INT $PID
 
 		# Waiting loop
@@ -34,7 +34,7 @@ restart_slapd() {
 				# Kill with force
 				kill -KILL $PID
 			fi
-			i=`expr $i + 1`
+			i=$(expr $i + 1)
 			sleep 1
 			done
 
