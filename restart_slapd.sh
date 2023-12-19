@@ -23,16 +23,16 @@ restart_slapd() {
 		exit 1
 	else
 		PID=$(cat $SLAPD_PID_FILE)
-		kill -INT $PID
+		kill -INT "$PID"
 
 		# Waiting loop
 		i=0
-		while [ -e /proc/$PID ]
+		while [ -e /proc/"$PID" ]
 			do
 			if [ $i -eq $TIMEOUT ]
 			then
 				# Kill with force
-				kill -KILL $PID
+				kill -KILL "$PID"
 			fi
 			i=$((i + 1))
 			sleep 1
