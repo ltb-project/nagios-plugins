@@ -34,7 +34,7 @@ restart_slapd() {
 				# Kill with force
 				kill -KILL $PID
 			fi
-			i=$(expr $i + 1)
+			i=$(($i + 1))
 			sleep 1
 			done
 
