@@ -33,7 +33,7 @@ install -p -m 0755 restart_slapd.sh %{buildroot}%{_libdir}/nagios/plugins/eventh
 
 
 %files
-%license LICENCE
+%license LICENSE
 %doc README.md
 %{_libdir}/nagios/plugins/*
 %{_libdir}/nagios/plugins/eventhandlers/restart_slapd.sh
