@@ -13,6 +13,6 @@ This is a collection of Nagios plugins and event handlers designed to monitor LD
 * Check LMDB Usage: Monitor LMDB usage
 * Restart OpenLDAP event handler: Restart OpenLDAP on HARD state
 
-Documentation: http://ltb-project.org/wiki/documentation#monitoring
+Documentation: [http://ltb-project.org/wiki/documentation#monitoring](https://www.ltb-project.org/documentation/)
 
-Download: http://ltb-project.org/wiki/download#monitoring
+Download: [http://ltb-project.org/wiki/download#monitoring](https://www.ltb-project.org/download.html#monitoring)
